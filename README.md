@@ -1,3 +1,15 @@
+⚠️ **Note on Folder Structure (Important for Professor)**  
+
+To keep our workflow organized, we created two folders for each weekly submission:  
+
+- `1.14_September_2025-09-14_Raw` → All group members upload their individual contributions here.  
+- `1.14_September_2025-09-14_Final` → After reviewing and cleaning the raw files, the organized final version for submission is placed here.  
+
+This ensures clarity: the **Raw folder** shows all initial work, while the **Final folder** contains the polished version we submit.
+
+
+
+
 # Wind_Turbines_A4
 
 **Group A4 – Wind Turbine Failure Detection**  
