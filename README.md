@@ -11,8 +11,7 @@ Control charts (T², SPEx) are built for fault detection, sensor diagnostics, an
 
 ---
 
-# Intermediary Submission 1  
-**Deadline:** 14-Sept  
+# Intermediary Submission 1  Deadline: 14-Sept  
 
 ---
 
