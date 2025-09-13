@@ -1,4 +1,4 @@
-⚠️ **Note on Folder Structure (Important for Professor)**  
+⚠️ **Note on Folder Structure (Important for Professor)**  for investigation please investigate the finla version. 
 
 To keep our workflow organized, we created two folders for each weekly submission:  
 
