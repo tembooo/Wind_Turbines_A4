@@ -13,8 +13,6 @@ Control charts (T², SPEx) are built for fault detection, sensor diagnostics, an
 
 # Intermediary Submission 1  Deadline: 14-Sept  
 
----
-
 # Wind Turbine SCADA Dataset Structure
 
 - **Sheets (Turbines):**
