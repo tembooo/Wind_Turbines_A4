@@ -222,4 +222,152 @@ fprintf('pca implementation completed!\n');
 
 end
 
-%% [FASIE - INSERT YOUR VISUALIZATION CODE HERE]
+
+%% PART 3: ADVANCED VISUALIZATIONS & INTERPRETATION - Fasie Haider
+
+
+
+
+%% create comprehensive visualizations
+fprintf('creating detailed PCA visualizations...\n');
+
+% main overview figure with 4 subplots
+figure('Position', [50, 50, 800, 600]);
+
+% scree plot - shows eigenvalues
+subplot(2, 2, 1);
+plot(1:length(eigenvals), eigenvals, 'bo-', 'linewidth', 2, 'markersize', 8);
+xlabel('Principal Component Number');
+ylabel('Eigenvalue (Variance)');
+title('Scree Plot - Eigenvalues');
+grid on; grid minor;
+
+% add kaiser rule line (eigenvalue = 1)
+hold on;
+xlims = xlim;
+plot(xlims, [1, 1], 'r--', 'linewidth', 2);
+text(xlims(2)*0.7, 1.1, 'Kaiser Rule (eigenvalue = 1)', 'color', 'red');
+hold off;
+
+% cumulative variance plot
+subplot(2, 2, 2);
+plot(1:length(var_explained), cum_var, 'ro-', 'linewidth', 2, 'markersize', 8);
+xlabel('Number of Principal Components');
+ylabel('Cumulative Variance Explained (%)');
+title('Cumulative Variance Plot');
+grid on; grid minor;
+
+% add horizontal lines for 80%, 90%, 95%
+hold on;
+xlims = xlim;
+plot(xlims, [80, 80], 'g--', 'linewidth', 1);
+plot(xlims, [90, 90], 'b--', 'linewidth', 1);
+plot(xlims, [95, 95], 'm--', 'linewidth', 1);
+text(xlims(2)*0.8, 82, '80%', 'color', 'green');
+text(xlims(2)*0.8, 92, '90%', 'color', 'blue');
+text(xlims(2)*0.8, 97, '95%', 'color', 'magenta');
+hold off;
+
+% scatter plot of PC1 vs PC2 - see if turbines separate
+subplot(2, 2, 3);
+hold on;
+colors = ['b', 'r', 'm'];  % blue=healthy, red=faulty1, magenta=faulty2
+names = {'healthy', 'faulty1', 'faulty2'};
+
+for t = 1:3
+    idx = labels == t;
+    scatter(scores(idx, 1), scores(idx, 2), 50, colors(t), 'filled', ...
+            'displayname', names{t}, 'markerfacealpha', 0.7);
+end
+
+xlabel(sprintf('PC1 (%.1f%% variance)', var_explained(1)));
+ylabel(sprintf('PC2 (%.1f%% variance)', var_explained(2)));
+title('PC Scores Plot');
+legend('location', 'best');
+grid on; grid minor;
+hold off;
+
+% loading plot for PC1 and PC2
+subplot(2, 2, 4);
+plot(coeffs(:, 1), coeffs(:, 2), 'ko', 'markersize', 8, 'markerfacecolor', 'cyan');
+hold on;
+
+% add variable labels (every 3rd variable to avoid clutter)
+for i = 1:3:n_vars
+    text(coeffs(i, 1)*1.1, coeffs(i, 2)*1.1, sprintf('v%d', i), ...
+         'fontsize', 9, 'horizontalalignment', 'center');
+end
+
+xlabel(sprintf('PC1 Loadings (%.1f%% variance)', var_explained(1)));
+ylabel(sprintf('PC2 Loadings (%.1f%% variance)', var_explained(2)));
+title('Loading Plot: Variable Contributions');
+grid on; grid minor;
+
+% add reference lines
+xlims = xlim;
+ylims = ylim;
+plot([0, 0], ylims, 'k--', 'linewidth', 0.5);
+plot(xlims, [0, 0], 'k--', 'linewidth', 0.5);
+hold off;
+
+sgtitle('Wind Turbine PCA Analysis - Overview', 'fontsize', 16);
+
+% detailed biplot - separate figure
+figure('Position', [100, 100, 1000, 800]);
+biplot(coeffs(:, 1:2), 'scores', scores(:, 1:2), 'varlabels', ...
+       arrayfun(@(x) sprintf('var%d', x), 1:n_vars, 'uniformoutput', false));
+xlabel(sprintf('PC1 (%.1f%% variance)', var_explained(1)));
+ylabel(sprintf('PC2 (%.1f%% variance)', var_explained(2)));
+title('PCA Biplot: Variables and Observations in PC Space');
+grid on; grid minor;
+
+% loading contributions for first 3 pcs
+figure('Position', [150, 150, 1200, 400]);
+for pc = 1:3
+    subplot(1, 3, pc);
+    bar(1:n_vars, coeffs(:, pc), 'facecolor', [0.2, 0.6, 0.8]);
+    xlabel('Variable Number');
+    ylabel(sprintf('PC%d Loading', pc));
+    title(sprintf('PC%d Loadings (%.1f%% var)', pc, var_explained(pc)));
+    grid on; grid minor;
+
+    % highlight top contributing variables
+    [~, top_vars] = sort(abs(coeffs(:, pc)), 'descend');
+    for i = 1:3  % top 3 contributors
+        var_idx = top_vars(i);
+        text(var_idx, coeffs(var_idx, pc)*1.1, sprintf('v%d', var_idx), ...
+             'horizontalalignment', 'center', 'fontsize', 10, 'fontweight', 'bold');
+    end
+end
+sgtitle('Loading Contributions for First 3 Principal Components', 'fontsize', 14);
+
+%% detailed interpretation and fault detection analysis
+fprintf('\n=== Advanced Interpretation & Fault Detection Analysis ===\n');
+
+% turbine separation analysis
+fprintf('\nDetailed turbine separation in PC space:\n');
+healthy_pc1 = scores(labels == 1, 1);
+faulty1_pc1 = scores(labels == 2, 1);
+faulty2_pc1 = scores(labels == 3, 1);
+
+fprintf('PC1 statistical analysis:\n');
+fprintf('  Healthy: mean=%.2f, std=%.2f, range=[%.2f, %.2f]\n', ...
+        mean(healthy_pc1), std(healthy_pc1), min(healthy_pc1), max(healthy_pc1));
+fprintf('  Faulty1: mean=%.2f, std=%.2f, range=[%.2f, %.2f]\n', ...
+        mean(faulty1_pc1), std(faulty1_pc1), min(faulty1_pc1), max(faulty1_pc1));
+fprintf('  Faulty2: mean=%.2f, std=%.2f, range=[%.2f, %.2f]\n', ...
+        mean(faulty2_pc1), std(faulty2_pc1), min(faulty2_pc1), max(faulty2_pc1));
+
+% calculate separation metrics
+healthy_mean = mean(healthy_pc1);
+faulty1_mean = mean(faulty1_pc1);
+faulty2_mean = mean(faulty2_pc1);
+
+sep_h_f1 = abs(healthy_mean - faulty1_mean);
+sep_h_f2 = abs(healthy_mean - faulty2_mean);
+sep_f1_f2 = abs(faulty1_mean - faulty2_mean);
+
+fprintf('\nSeparation distances in PC1:\n');
+fprintf('  Healthy vs Faulty1: %.2f standard deviations\n', sep_h_f1);
+fprintf('  Healthy vs Faulty2: %.2f standard deviations\n', sep_h_f2);
+fprintf('  Faulty1 vs Faulty2: %.2f standard deviations\n', sep_f1_f2);
