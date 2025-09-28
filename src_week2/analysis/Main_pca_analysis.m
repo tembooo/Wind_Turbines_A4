@@ -87,6 +87,81 @@ fprintf('\n=== checking correlations (exploratory) ===\n');
 % zero-variance variables, computed explained variance, number of PCs
 % for 80/90/95%, and identified the top contributing variables for PC1
 % and PC2.
+fprintf('found %d pairs with high correlation (>0.8)\n', size(high_corr_pairs, 1));
+if size(high_corr_pairs, 1) > 0
+    fprintf('strongest correlations:\n');
+    for i = 1:min(5, size(high_corr_pairs, 1))
+        fprintf('  %s and %s: r = %.3f\n', ...
+            var_names{high_corr_pairs(i,1)}, var_names{high_corr_pairs(i,2)}, high_corr_pairs(i,3));
+    end
+end
+
+%% PCA (with healthy-based scaling inside)
+fprintf('\n=== doing PCA (healthy-based scaling) ===\n');
+[coeffs, scores, eigenvals, var_explained, scale_info] = ...
+    pca_implementation(all_data, n_healthy, var_names);
+
+% Report which columns were dropped (zero variance in healthy)
+fprintf('Zero-variance-in-healthy columns dropped: %d\n', numel(scale_info.dropped_idx));
+for k = 1:numel(scale_info.dropped_idx)
+    j = scale_info.dropped_idx(k);
+    fprintf('  drop col %d (%s), sd_h=%.3g\n', j, scale_info.dropped_names{k}, scale_info.sd_h_full(j));
+end
+fprintf('Columns before: %d | after: %d\n', scale_info.n_vars_in, numel(scale_info.kept_idx));
+
+% Short handles for kept labels
+var_labels_kept = scale_info.kept_names;      % 1xP_kept cellstr
+n_vars_kept     = numel(var_labels_kept);
+
+% If any unexpected row removal somehow happened (should not), adjust labels defensively
+if size(scores, 1) ~= length(labels)
+    fprintf('adjusting labels to match cleaned data...\n');
+    n_scores = size(scores, 1);
+    ratio_healthy = n_healthy / (n_healthy + n_faulty1 + n_faulty2);
+    ratio_faulty1 = n_faulty1 / (n_healthy + n_faulty1 + n_faulty2);
+
+    new_healthy = round(n_scores * ratio_healthy);
+    new_faulty1 = round(n_scores * ratio_faulty1);
+    new_faulty2 = n_scores - new_healthy - new_faulty1;
+
+    labels = [ones(new_healthy, 1);
+              2*ones(new_faulty1, 1);
+              3*ones(new_faulty2, 1)];
+    fprintf('  new labels: %d healthy, %d faulty1, %d faulty2\n', ...
+            new_healthy, new_faulty1, new_faulty2);
+end
+
+fprintf('PCA results:\n');
+if isempty(var_explained) || length(var_explained) < 1
+    fprintf('error: PCA failed!\n');
+    return;
+end
+
+fprintf('  PC1 explains: %.1f%% of variance\n', var_explained(1));
+if length(var_explained) >= 2
+    fprintf('  PC1+PC2 explain: %.1f%% total\n', sum(var_explained(1:2)));
+end
+if length(var_explained) >= 5
+    fprintf('  first 5 PCs explain: %.1f%% total\n', sum(var_explained(1:5)));
+end
+
+% How many components needed for different variance levels?
+cum_var = cumsum(var_explained);
+pc_80 = find(cum_var >= 80, 1, 'first');
+pc_90 = find(cum_var >= 90, 1, 'first');
+pc_95 = find(cum_var >= 95, 1, 'first');
+
+fprintf('  need %d components for 80%% variance\n', pc_80);
+fprintf('  need %d components for 90%% variance\n', pc_90);
+fprintf('  need %d components for 95%% variance\n', pc_95);
+% Basic component interpretation (print top contributors by NAME)
+fprintf('\nlooking at what the main components represent:\n');
+[~, pc1_top] = sort(abs(coeffs(:, 1)), 'descend');
+fprintf('PC1 (%.1f%% variance) - main contributors:\n', var_explained(1));
+for i = 1:min(5, n_vars_kept)
+    var_idx = pc1_top(i);
+    fprintf('  %s: loading = %.3f\n', var_labels_kept{var_idx}, coeffs(var_idx, 1));
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Haider Ali
 % He did this part: Visualization and interpretation
